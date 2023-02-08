@@ -31,5 +31,5 @@ https://wiki.archlinux.org/title/swap#Swap_file
 
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin {username} %I $TERM
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin your_username %I $TERM
 
