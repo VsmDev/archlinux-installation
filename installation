@@ -1,0 +1,72 @@
+
+rfkill unblock wifi
+vim /etc/iwd/main.conf
+
+-----------------------------------------
+[General]
+EnableNetworkConfiguration=true
+
+[Network]
+NameResolvingService=systemd
+-----------------------------------------
+
+systemctl restart iwd.service
+
+iwctl
+device list
+station $device scan
+station $device get-networks
+station device connect $wifi
+
+lsblk 
+cgdisk /dev/$disk
+
+cryptsetup -y --use-random luksFormat /dev/$root
+cryptsetup open /dev/$root cryptroot
+
+mkfs.fat -F 32 /dev/$efi
+mkfs.ext4 -O "^has_journal" /dev/$boot
+mkfs.ext4 /dev/mapper/cryptroot
+
+mount /dev/mapper/cryptroot /mnt
+mount --mkdir /dev/$boot /mnt/boot
+mount --mkdir /dev/$efi /mnt/boot/efi
+
+pacman -Su archlinux-keyring
+pacstrap /mnt linux linux-firmware base sudo grub efibootmgr vim intel-ucode/amd-ucode networkmanager
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+arch-chroot /mnt
+
+hwclock --systohc
+
+vim /etc/locale.gen
+locale-gen
+echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+echo 'arch' > /etc/hostname
+
+vim /etc/mkinitcpio.conf
+# add encrypt before filesystems and move keyboard between autodetect and modconf
+mkinitcpio -P
+
+blkid >> /tmp/1
+
+vim /etc/default/grub
+# change GRUB_CMDLINE_LINUX="" to GRUB_CMDLINE_LINUX="cryptdevice=UUID=xxxx:cryptroot root=/dev/mapper/cryptroot"
+# xxxx is the UUID of the /dev/$root partition
+
+grub-install
+grub-mkconfig -o /boot/grub/grub.cfg
+
+systemctl enable NetworkManager.service
+
+useradd -m -G wheel $username
+passwd $username
+
+visudo
+# uncomment %wheel ALL=(ALL) ALL
+
+exit
+reboot
+
