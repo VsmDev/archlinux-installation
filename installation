@@ -16,7 +16,7 @@ iwctl
 device list
 station $device scan
 station $device get-networks
-station device connect $wifi
+station $device connect $wifi
 
 lsblk 
 cgdisk /dev/$disk
